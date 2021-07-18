@@ -4,6 +4,10 @@
 #include <WiFi.h>
 #include "app_httpd.cpp"
 
+TaskHandle_t Core0;
+
+void LoopCore0(void * pvParameters );
+
 //
 // WARNING!!! PSRAM IC required for UXGA resolution and high JPEG quality
 //            Ensure ESP32 Wrover Module or other board with PSRAM is selected
@@ -91,14 +95,21 @@ void setup() {
   s->set_hmirror(s, 1);
 #endif
 
-  WiFi.begin(ssid, password);
+xTaskCreatePinnedToCore(
+                    LoopCore0,   
+                    "Core0",     
+                    10000,       
+                    NULL,        
+                    1,           
+                    &Core0,      
+                    0);                            
+  delay(500); 
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+
+  //wifi
+  while (WiFi.status() != WL_CONNECTED){
+    
   }
-  Serial.println("");
-  Serial.println("WiFi connected");
 
   startCameraServer();
 
@@ -107,7 +118,29 @@ void setup() {
   Serial.println("' to connect");
 }
 
+void LoopCore0(void * pvParameters ){
+static bool started=false;
+  if (!started){
+    Serial.println("Started core 0");
+    WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+    started=true;
+  } 
+  for(;;){
+  Serial.println("Core 0 Loop");
+  delay(1000);
+  } 
+}
+
+
 void loop() {
   // put your main code here, to run repeatedly:
-  delay(10000);
+  Serial.println("Normal Loop");
+  delay(1000);
 }
